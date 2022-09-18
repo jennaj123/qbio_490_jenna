@@ -5,7 +5,7 @@ date: 07/16/22
 ---
 
 ```{r setup}
-    knitr::opts_knit$set(root.dir = normalizePath("/PATH/TO/DIRECTORY")) 
+    knitr::opts_knit$set(root.dir = normalizePath("/Users/jennajacobs/Documents/USC/qbio/attenu_cleaned.csv")) 
 ```
 
 Answer the following questions to the best of your ability. DO NOT use loops in your implementation (it isn't necessary for any of these questions). If you have questions, be sure to reach out to Nicole/TAs via GitHub issues, or attend office hours! We're always are happy to help!
@@ -31,12 +31,15 @@ Use is.na() to identify any rows with missing $station data (recall that the dol
 
 ```{r}
 # write code here
+na_boolean_mask = is.na(attenu$station)
+
 ```
 
 Use the sum() function on na_boolean_mask. What does this number represent? Remember this value for later (you can save it in a variable if you would like).
 
 ```{r}
 # write code here
+num_missing_data <- sum(na_boolean_mask)
 ```
 
 Remember that boolean values are TRUEs and FALSEs. A boolean mask is a vector of boolean values that can be applied to a data frame within the df[row, column] notation. If you apply the mask in the row section df[mask , ] then R will go through all of the rows of your data frame and check if the corresponding value in the boolean mask vector is a TRUE or a FALSE. TRUE rows are selected, and FALSE rows are ignored. The syntax is as follows:
@@ -54,19 +57,22 @@ THINK: When using is.na(), are NA values assigned TRUE or FALSE? With this infor
 ```{r}
 # write code here
 
-attenu_cleaned <- FILL IN HERE
+attenu_cleaned <- attenu[!na_boolean_mask, ]
 ```
 
 View your attenu_cleaned data frame to confirm you have cleaned it as intended. There should be no NA values in the station column.
 
 ```{r}
 # write code here
+attenu_cleaned <- attenu[!na_boolean_mask, ]
 ```
 
 Use the function nrow() to count the number of rows in attenu and attenu_cleaned. Given the number of TRUEs and FALSEs in na_boolean_mask, do these values make sense? What is the relationship between these numbers?
 
 ```{r}
 # write code here
+nrow(attenu)
+nrow(attenu_cleaned)
 ```
 
 ###### (2) Plotting
@@ -77,12 +83,14 @@ Create a boxplot that splits the sepal length data into groups by species. For h
 
 ```{r}
 # write code here
+boxplot(iris$Sepal.Length~iris$Species)
 ```
 
 Create a histogram of petal length.
 
 ```{r}
 # write code here
+hist(iris$Petal.Length)
 ```
 
 Choose any two columns from the iris data set. Create a scatterplot that compares these columns, color coded based on the values relative to the column means. Follow these steps to create your plot:
@@ -101,12 +109,20 @@ Note: If you write multiple plotting lines, they will all show up on top of each
 
 ```{r}
 # write code here
+x_mean = mean(iris$Sepal.Width)
+y_mean = mean(iris$Petal.Width)
+colour = c()
+colour = ifelse(iris$Sepal.Width > x_mean & iris$Petal.Width > y_mean, "blue", ifelse(iris$Sepal.Width > x_mean & iris$Petal.Width < y_mean, "green", ifelse(iris$Sepal.Width < x_mean & iris$Petal.Width < y_mean, "red", "yellow")))
+colour_factor = as.factor(colour)
+plot(iris$Sepal.Width, iris$Petal.Width, col = colour_factor)
+abline(v = x_mean, h = y_mean)
 ```
 
 Create a Draftsman's or Pairs Scatter Plot that looks at the sepal length, sepal width, petal length, and petal width colored by the species. You can play around with various other arguments to make this plot as readable as possible. (HINT: Google how to color by factor with the "col" argument)
 
 ```{r}
 # write code here
+pairs(iris, col = colour_factor)
 ```
 
 The Draftsman's plot above is interesting since it looks like using these four measurements, a fairly accurate species prediction can be made! This is an example of a cluster analysis, and you can use a plot like this one later on to explore cancer predictors.
@@ -116,7 +132,7 @@ The Draftsman's plot above is interesting since it looks like using these four m
 Often, we want to save results data frames to a local machine so they can be saved, shared, or further explored with other software. To do this, we have to "write" the file using write.csv() as follows:
 
 ```{r}
-write.csv(dataframe, "/PATH/TO/DESTINATION/dataframe.csv") # in R, file paths are strings so don't forget the quotes!
+write.csv(attenu_cleaned, "Users/JennaJacobs/Documents/USC/qbio/attenu_cleaned.csv") # in R, file paths are strings so don't forget the quotes!
 ```
 
 Save the attenu_cleaned to your desktop, then view it from your GUI.
@@ -128,7 +144,7 @@ Save the attenu_cleaned to your desktop, then view it from your GUI.
 Along with writing files, we oftentimes want to read files into our R environment. These files could be previously saved result files, raw data, etc. We read in csv files using read.csv() as follows:
 
 ```{r}
-df <- read.csv("/PATH/TO/FILE/file.csv", header = TRUE)
+df <- read.csv("/Users/jennajacobs/Documents/USC/qbio/attenu_cleaned.csv", header = TRUE)
 ```
 
 The header (boolean value) tells R whether the file contains the names of the variables as the first line.
@@ -137,13 +153,14 @@ Read in your attenu_cleaned file to a data frame called attenu_read_in. We won't
 
 ```{r}
 # write code here
+atennu_read_in = read.csv("/Users/jennajacobs/Documents/USC/qbio/attenu_cleaned.csv", header = TRUE)
 ```
 
 We also oftentimes want to save our plots. You can do this as follows:
 
 ```{r}
-jpg("/PATH/TO/DESTINATION/plot.jpg") # choose any file extension, typically jpg and pdf are most common
-plot(x,y) # put all of your plotting lines here
+jpg("/Users/jennajacobs/Documents/USC/qbio/attenu_cleaned.csv/plot.jpg") # choose any file extension, typically jpg and pdf are most common
+plot(iris$Sepal.Width, iris$Petal.Width) # put all of your plotting lines here
 abline(h  = 1)
 dev.off() # close the plotting environment and save the plot
 ```
@@ -152,6 +169,9 @@ Adapt your histogram plot to be saved to your desktop.
 
 ```{r}
 # write code here
+jpeg("/Users/jennajacobs/Documents/USC/qbio/attenu_cleaned.csv")
+hist(iris$Sepal.Width)
+dev.off()
 ```
 
 ###### (4) Looking Ahead

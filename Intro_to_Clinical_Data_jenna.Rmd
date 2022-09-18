@@ -15,7 +15,7 @@ As good general practice to keep things organized, create an "analysis_data" fol
 Once the folder is created, set your working directory below:
 
 ```{r setup}
-    knitr::opts_knit$set(root.dir = normalizePath("/PATH/TO/analysis_data")) 
+    knitr::opts_knit$set(root.dir = normalizePath("/qbio_490_jenna/analysis_data")) 
 ```
 
 Before you move on, go to your GitHub web browser, open your .gitignore, and make sure the following is added in. 
@@ -34,6 +34,8 @@ You should have already installed both the BiocManager and TCGAbiolinks packages
 
 ```{r Exercise 2.1}
 # load packages
+library(BioManager)
+library(TCGAbiolinks)
 ```
 
 To get the clinical data files onto your computer, use GDCquery(). 
@@ -41,7 +43,7 @@ To get the clinical data files onto your computer, use GDCquery().
 Hint: you'll need to fill in the "project", "data.category", and "file.type" (=xml) arguments. Look up GDCquery() either in the help panel or online to determine which "project" and "data.category" to use. At the bottom of the help panel there are examples that might be useful as well.
 
 ```{r Exercise 2.2}
-clinical_query <- GDCquery(FILL IN HERE)
+clinical_query <- GDCquery(project = "TCGA-BRCA", data.category = "Clinical", file.type = "xml")
 ```
 
 After you have queried the data, download it.
@@ -53,7 +55,7 @@ GDCdownload(clinical_query) # ONLY RUN THIS ONCE! it is very slow
 Lastly, to get the data into an R data frame, use GDCprepare_clinic().
 
 ```{r Exercise 2.3}
-clinical <- GDCprepare_clinic(FILL IN HERE)
+clinical <- GDCprepare_clinic(clinical_query, clinical.info = "patient")
 ```
 
 ###### (3) Exploring the Data
@@ -68,18 +70,25 @@ Answer the following questions based on the output of those commands:
 
 ```{r Exercise 3.1}
 # write code here
+str(clinical)
+head(clinical)
+
 ```
 
 View the column and row names. What two commands should you use?
 
 ```{r Exercise 3.2}
 # write code here
+colnames(clinical)
+rownames(clinical)
 ```
 
 View the vital status column. What two notations can be used to view columns? 
 
 ```{r Exercise 3.3}
 # write code here
+clinical$vital_status
+clinical[ ,3]
 ```
 
 ###### (4) Plotting
