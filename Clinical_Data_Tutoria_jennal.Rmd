@@ -9,14 +9,14 @@ date: 07/17/22
 Set your working environment to analysis_data:
 
 ```{r setup}
-    knitr::opts_knit$set(root.dir = normalizePath("/qbio_490_jenna/analysis_data")) 
+    knitr::opts_knit$set(root.dir = normalizePath("/Users/JennaJacobs/Documents/USC/qbio490/qbio_490_jenna/analysis_data")) 
 ```
 
 Load in the BiocManager and TCGAbiolinks packages:
 
 ```{r}
 # load in packages
-library(BioManager)
+library(BiocManager)
 library(TCGAbiolinks)
 ```
 
@@ -25,7 +25,7 @@ Re-query and prepare your data. NOTE: You don't have to download it again!!
 ```{r}
 clinical_query <- GDCquery(project = "TCGA-BRCA", data.category = "Clinical", file.type = "xml")
 
-clinical <- GDCprepare_clinic(FILL IN HERE)
+clinical <- GDCprepare_clinic(clinical_query, clinical.info = "patient")
 ```
 
 ###### (2) Exploring Age (Boolean Indexing!)
@@ -33,8 +33,9 @@ clinical <- GDCprepare_clinic(FILL IN HERE)
 There are many factors to explore in the clinical data, but for now, we will be focusing on age. Early onset breast cancer (typically defined as < 45 or < 50 years old) is often associated with a more aggressive tumor type as well as a poorer prognosis.
 
 Look up "early onset breast cancer" in Google Scholar and pick a paper to skim.
-    1. Link to paper:
-    2. What is one thing you learned from this paper: 
+    1. Link to paper: https://doi.org/10.1016/S0140-6736(03)12856-5
+    2. What is one thing you learned from this paper:The lifetime risk of breast cancer ranges between 43 and 85%. 
+    
     
 Let's start with an overview of the age data. Run the following functions on the age_at_initial_pathologic_diagnosis column. Record the output below.
     1. min() = 
@@ -45,6 +46,12 @@ Let's start with an overview of the age data. Run the following functions on the
 
 ```{r}
 # write code here
+min(clinical$age_at_initial_pathologic_diagnosis)
+max(clinical$age_at_initial_pathologic_diagnosis)
+mean(clinical$age_at_initial_pathologic_diagnosis)
+median(clinical$age_at_initial_pathologic_diagnosis)
+summary(clinical$age_at_initial_pathologic_diagnosis)
+
 ```
 
 For the purposes of our analysis, we will define "young" as < 50 y/o, and "old" as >= 50 y/o.
@@ -53,6 +60,10 @@ Create a column in "clinical" called "age_category" with the values "young" and 
 
 ```{r}
 # write code here
+
+  clinical$age_category <- ifelse(clinical$age_at_initial_pathologic_diagnosis < 50, clinical$age_category <- "young", clinical$age_category <-"old")
+
+
 ```
 
 Now, let's say we want to create a new clinical data frame with only young patients. How can we do that?
@@ -62,7 +73,9 @@ Remember Boolean masking from R_Tutorial.Rmd? In that notebook, we created a boo
 Create a boolean vector using an ifelse() statement where young patients (< 50) are TRUE, and old patients (>= 50) are FALSE.
 
 ```{r}
-age_mask <- # write code here
+
+age_mask <- ifelse(clinical$age_at_initial_pathologic_diagnosis < 50, TRUE, FALSE)
+
 ```
 
 Call the sum function on age_mask. Remember that TRUEs are treated as 1, and FALSEs are treated as 0. Knowing this, what will your sum represent?
@@ -70,6 +83,7 @@ Call the sum function on age_mask. Remember that TRUEs are treated as 1, and FAL
 
 ```{r}
 # write code here
+sum(age_mask)
 ```
 
 Now let's take the age_mask and apply it to create a new subsetted data frame. You can do this by placing the mask on either the rows or columns side of the df[rows, columns] format.
@@ -80,7 +94,7 @@ Which side do we place it on? Let's think. If we place the mask in the rows side
 We want to select for *patients* who are young. Will keeping/ignoring rows or columns allow us to create our young_clinical df? HINT: what data is stored in rows and what data is stored in columns?
 
 ```{r}
-young_clinical <- clinical[FILL IN HERE]
+young_clinical <- clinical[age_mask, ]
 ```
 
 View the young_clinical data frame by double-clicking on it in the Environment panel to ensure that you created it as intended.
@@ -88,7 +102,7 @@ View the young_clinical data frame by double-clicking on it in the Environment p
 Now, create an old_clinical data frame using the SAME mask as before. What do you have to change? Remember that TRUE rows/columns are kept, and FALSE rows/columns are ignored.
 
 ```{r}
-old_clinical <-
+old_clinical <- clinical[!age_mask, ]
 ```
 
 The number of rows in the young_clinical data frame added to the number of rows in the old_clinical data frame should sum up to the number of rows in the clinical data frame.
@@ -96,7 +110,7 @@ The number of rows in the young_clinical data frame added to the number of rows 
 Let's check to make sure that nothing went wrong in our process:
 
 ```{r}
-nrows(clinical) == # write code here
+nrow(clinical) == nrow(old_clinical) + nrow(young_clinical)# write code here
 ```
 
 The statement you just wrote (x == y) is called an assert statement, and it can be used as a sanity check to make sure that everything is working as it should. You should use assert statements throughout your coding process as checkpoints to avoid going down too far down the wrong path. Write assert statements in the Console since you don't actually need to save any outputs.
@@ -110,6 +124,20 @@ Now, we're going to look at Kaplan-Meier plots separated by age category. A Kapl
 Before we get started, install and load the "survival" and "survminer" packages. Also install/load ggplot2 if it is not already in your RStudio.
 
 ```{r}
+if (!require(survival)){
+  install.packages("survival")
+}
+library(survival)
+
+if (!require(survminer)){
+  install.packages("survminer")
+}
+library(survminer)
+
+if (!require(ggplot2)){
+  install.packages("ggplot2")
+}
+library(ggplot2)
 # install and load packages 
 ```
 
@@ -120,12 +148,14 @@ Let's create a column in clinical called survival_time. For some patients, we ca
 ```{r}
 # write code here 
 # HINT: use ifelse() and is.na()
+clinical$survival_time <- ifelse(is.na(clinical$days_to_death), clinical$survival_time <- clinical$days_to_last_followup, clinical$survival_time <-clinical$days_to_death)
 ```
 
 Next, create the death_event column. This column will store a boolean variable that is TRUE if there was a death event, or FALSE if there was no recorded event. You can use the vital_status column and an ifelse() statement to make this column.
 
 ```{r}
 # write code here
+clinical$death_event <- ifelse(clinical$vital_status == "Alive", clinical$death_event <- FALSE, clinical$death_event <-TRUE)
 ```
 
 Now we can perform our analysis! Read the Help info for each function, then fill in the blanks with the columns you created (age_category, survival_time, death_event).
@@ -133,14 +163,14 @@ Now we can perform our analysis! Read the Help info for each function, then fill
 ```{r}
 # Initialize a 'survival' object, which contains the data we need.
 ?Surv
-surv_object_age <- Surv(time = FILL_IN_HERE,
-                    event = FILL_IN_HERE)
+surv_object_age <- Surv(time = clinical$survival_time,
+                    event = clinical$death_event)
 
 # Create a fit object
 # When writing formulas (x ~ y), x is what's being plotted and y is what is grouping x into categories
 ?surv_fit
-age_fit <- surv_fit( surv_object ~ FILL_IN_HERE,
-                     data = clinical )
+age_fit <- survfit(surv_object_age ~ clinical$age_category,
+                     data = clinical)
 
 # the ggtheme and legend arguments are for formatting. 
 # Feel free to play around with the margins and legend placement
@@ -162,6 +192,7 @@ KM_plot_age
 ```
 
 Take a moment to look at your plot and try to understand what it is saying. Write some observations/key takeaways below:
+Young people, or those under the age of 50 have a higher survival rate after 3500 days on the graph, this is likely due to the fact that the young people have passed away by this point. For the first 3500 days the survival rate of old people decline at a faster rate than the younger group.
 
 ###### (4) Saving files
 
@@ -174,7 +205,7 @@ Remember, you can use write.csv() to save a data frame to a .csv file, and you c
 ```{r}
 # change the file path! make sure it's in your week4 folder
 # we set row.names to false since the first row doesn't contain row name info
-write.csv(clinical, "/PATH/TO/DESTINATION/brca_clinical_data.csv", row.names = FALSE)
+write.csv(clinical, "/Users/JennaJacobs/Documents/USC/qbio490/qbio_490_jenna/brca_clinical_data.csv", row.names = FALSE)
 ```
 
 
